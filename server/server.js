@@ -40,6 +40,21 @@ const createHeadline = (name, location) => {
     .replace(/{location}/g, location);
 };
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'GrowthProAI Business Dashboard API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      'POST /business-data': 'Get business analytics data',
+      'GET /regenerate-headline': 'Generate new SEO headline',
+      'GET /health': 'Health check endpoint'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // POST /business-data endpoint
 app.post('/business-data', (req, res) => {
   try {
@@ -93,10 +108,92 @@ app.get('/regenerate-headline', (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    memory: process.memoryUsage(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API documentation endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    title: 'GrowthProAI Business Dashboard API',
+    description: 'API for generating business insights and SEO content',
+    version: '1.0.0',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/',
+        description: 'API information and status'
+      },
+      {
+        method: 'POST',
+        path: '/business-data',
+        description: 'Get business analytics data',
+        body: {
+          name: 'string (required)',
+          location: 'string (required)'
+        },
+        response: {
+          rating: 'number',
+          reviews: 'number',
+          headline: 'string',
+          name: 'string',
+          location: 'string'
+        }
+      },
+      {
+        method: 'GET',
+        path: '/regenerate-headline',
+        description: 'Generate new SEO headline',
+        query: {
+          name: 'string (required)',
+          location: 'string (required)'
+        },
+        response: {
+          headline: 'string'
+        }
+      },
+      {
+        method: 'GET',
+        path: '/health',
+        description: 'Health check endpoint'
+      }
+    ]
+  });
+});
+
+// 404 handler for undefined routes
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    message: `The requested route ${req.originalUrl} does not exist`,
+    availableRoutes: [
+      'GET /',
+      'POST /business-data',
+      'GET /regenerate-headline',
+      'GET /health',
+      'GET /api'
+    ]
+  });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Server Error:', error);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: 'Something went wrong on the server',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Dashboard API ready at http://localhost:${PORT}`);
+  console.log(`📖 API documentation at http://localhost:${PORT}/api`);
+  console.log(`💚 Health check at http://localhost:${PORT}/health`);
 });
