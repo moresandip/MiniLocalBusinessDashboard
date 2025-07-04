@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, MapPin, Search, Loader2 } from 'lucide-react';
+import { Building2, MapPin, Search, Loader2, Sparkles } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
 const BusinessForm: React.FC = () => {
@@ -73,89 +73,107 @@ const BusinessForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
-            <Building2 className="w-8 h-8 text-white" />
+    <div className="w-full max-w-lg mx-auto lg:mx-0">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-500/10 p-10 border border-gray-200/50 relative overflow-hidden">
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-3xl"></div>
+        
+        <div className="relative z-10">
+          <div className="text-center mb-10">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-700 rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300">
+              <Building2 className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">
+              Business Intelligence
+            </h2>
+            <p className="text-gray-600 leading-relaxed">
+              Enter your business details to unlock powerful AI-driven insights and optimization strategies
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Business Dashboard
-          </h2>
-          <p className="text-gray-600">
-            Enter your business details to get insights
-          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Business Name
+              </label>
+              <div className="relative group">
+                <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  value={state.formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 ${
+                    formErrors.name ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  placeholder="e.g., Artisan Coffee House"
+                  disabled={state.loading}
+                />
+              </div>
+              {formErrors.name && (
+                <p className="mt-2 text-sm text-red-500 flex items-center">
+                  <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                  {formErrors.name}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Business Location
+              </label>
+              <div className="relative group">
+                <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  value={state.formData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 ${
+                    formErrors.location ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  placeholder="e.g., Downtown Seattle"
+                  disabled={state.loading}
+                />
+              </div>
+              {formErrors.location && (
+                <p className="mt-2 text-sm text-red-500 flex items-center">
+                  <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                  {formErrors.location}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={state.loading}
+              className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 px-8 rounded-2xl font-semibold hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/25 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              
+              {state.loading ? (
+                <div className="flex items-center justify-center relative z-10">
+                  <Loader2 className="w-5 h-5 animate-spin mr-3" />
+                  <span>Analyzing Business...</span>
+                  <Sparkles className="w-4 h-4 ml-2 animate-pulse" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center relative z-10">
+                  <Search className="w-5 h-5 mr-3" />
+                  <span>Generate Business Insights</span>
+                  <Sparkles className="w-4 h-4 ml-2" />
+                </div>
+              )}
+            </button>
+          </form>
+
+          {state.error && (
+            <div className="mt-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                <p className="text-sm text-red-600 font-medium">{state.error}</p>
+              </div>
+            </div>
+          )}
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Name
-            </label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={state.formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                  formErrors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter business name"
-                disabled={state.loading}
-              />
-            </div>
-            {formErrors.name && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={state.formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                  formErrors.location ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter location"
-                disabled={state.loading}
-              />
-            </div>
-            {formErrors.location && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.location}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={state.loading}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
-          >
-            {state.loading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Analyzing Business...
-              </div>
-            ) : (
-              <div className="flex items-center justify-center">
-                <Search className="w-5 h-5 mr-2" />
-                Get Business Insights
-              </div>
-            )}
-          </button>
-        </form>
-
-        {state.error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{state.error}</p>
-          </div>
-        )}
       </div>
     </div>
   );
