@@ -4,9 +4,23 @@ import cors from 'cors';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Enhanced CORS configuration
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 // Static list of AI-generated SEO headlines
 const seoHeadlines = [
@@ -19,7 +33,12 @@ const seoHeadlines = [
   "Breaking: {name} Revolutionizes {location}'s Market",
   "Inside {name}: {location}'s Premium Business Experience",
   "{name} Sets New Standards in {location}",
-  "Exclusive: Why {name} Dominates {location}'s Scene"
+  "Exclusive: Why {name} Dominates {location}'s Scene",
+  "{name}: {location}'s Hidden Gem Revealed",
+  "How {name} is Changing the Game in {location}",
+  "{name} - The Future of {location}'s Business Scene",
+  "Why Everyone in {location} is Talking About {name}",
+  "{name}: Your Next Favorite Spot in {location}"
 ];
 
 // Helper function to generate a random rating
@@ -57,12 +76,16 @@ app.get('/', (req, res) => {
 
 // POST /business-data endpoint
 app.post('/business-data', (req, res) => {
+  console.log('Received business-data request:', req.body);
+  
   try {
     const { name, location } = req.body;
     
     if (!name || !location) {
+      console.log('Missing required fields:', { name, location });
       return res.status(400).json({ 
-        error: 'Business name and location are required' 
+        error: 'Business name and location are required',
+        received: { name, location }
       });
     }
 
@@ -71,38 +94,52 @@ app.post('/business-data', (req, res) => {
       const businessData = {
         rating: generateRating(),
         reviews: generateReviews(),
-        headline: createHeadline(name, location),
-        name,
-        location
+        headline: createHeadline(name.trim(), location.trim()),
+        name: name.trim(),
+        location: location.trim()
       };
 
+      console.log('Sending business data:', businessData);
       res.json(businessData);
     }, 1000); // 1 second delay to show loading state
 
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in /business-data:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 });
 
 // GET /regenerate-headline endpoint
 app.get('/regenerate-headline', (req, res) => {
+  console.log('Received regenerate-headline request:', req.query);
+  
   try {
     const { name, location } = req.query;
     
     if (!name || !location) {
+      console.log('Missing query parameters:', { name, location });
       return res.status(400).json({ 
-        error: 'Business name and location are required' 
+        error: 'Business name and location are required',
+        received: { name, location }
       });
     }
 
     // Simulate processing delay
     setTimeout(() => {
-      const newHeadline = createHeadline(name, location);
+      const newHeadline = createHeadline(name.trim(), location.trim());
+      console.log('Sending new headline:', newHeadline);
       res.json({ headline: newHeadline });
     }, 800); // Slightly faster for regeneration
 
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in /regenerate-headline:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 });
 
@@ -191,9 +228,10 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Dashboard API ready at http://localhost:${PORT}`);
   console.log(`📖 API documentation at http://localhost:${PORT}/api`);
   console.log(`💚 Health check at http://localhost:${PORT}/health`);
+  console.log(`🌐 CORS enabled for frontend development`);
 });

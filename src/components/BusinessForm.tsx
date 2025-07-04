@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, MapPin, Search, Loader2, Sparkles } from 'lucide-react';
+import { Building2, MapPin, Search, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
 const BusinessForm: React.FC = () => {
@@ -38,24 +38,48 @@ const BusinessForm: React.FC = () => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      console.log('Sending request to backend:', { name: name.trim(), location: location.trim() });
+      
       const response = await fetch('http://localhost:3001/business-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ name: name.trim(), location: location.trim() }),
+        body: JSON.stringify({ 
+          name: name.trim(), 
+          location: location.trim() 
+        }),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch business data');
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+        throw new Error(`Server responded with ${response.status}: ${errorData}`);
       }
 
       const data = await response.json();
+      console.log('Received data:', data);
       dispatch({ type: 'SET_BUSINESS_DATA', payload: data });
     } catch (error) {
+      console.error('Fetch error:', error);
+      
+      let errorMessage = 'Failed to fetch business data. ';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage += 'Please make sure the server is running on http://localhost:3001';
+      } else if (error instanceof Error) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
       dispatch({ 
         type: 'SET_ERROR', 
-        payload: 'Failed to fetch business data. Please make sure the server is running.' 
+        payload: errorMessage
       });
     }
   };
@@ -167,9 +191,14 @@ const BusinessForm: React.FC = () => {
 
           {state.error && (
             <div className="mt-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
-                <p className="text-sm text-red-600 font-medium">{state.error}</p>
+              <div className="flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-red-600 font-medium">{state.error}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    Make sure the backend server is running on port 3001
+                  </p>
+                </div>
               </div>
             </div>
           )}
