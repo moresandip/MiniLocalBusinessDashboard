@@ -24,6 +24,7 @@ type BusinessAction =
   | { type: 'SET_HEADLINE_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_BUSINESS_DATA'; payload: BusinessData }
+  | { type: 'UPDATE_BUSINESS_DATA'; payload: BusinessData }
   | { type: 'SET_FORM_DATA'; payload: { name: string; location: string } }
   | { type: 'UPDATE_HEADLINE'; payload: string }
   | { type: 'RESET_STATE' };
@@ -53,6 +54,12 @@ const businessReducer = (state: BusinessState, action: BusinessAction): Business
         businessData: action.payload, 
         loading: false, 
         error: null 
+      };
+    case 'UPDATE_BUSINESS_DATA':
+      return {
+        ...state,
+        businessData: action.payload,
+        error: null
       };
     case 'SET_FORM_DATA':
       return { ...state, formData: action.payload };

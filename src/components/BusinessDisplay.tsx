@@ -1,9 +1,13 @@
-import React from 'react';
-import { Star, MessageCircle, Sparkles, RefreshCw, Loader2, TrendingUp, Award, Target, BarChart3, Users, Globe, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, MessageCircle, Sparkles, RefreshCw, Loader2, TrendingUp, Award, Target, BarChart3, Users, Globe, Calendar, Edit3, Check, X, Download, FileText, Building2 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
 const BusinessDisplay: React.FC = () => {
   const { state, dispatch } = useBusiness();
+  const [editingRating, setEditingRating] = useState(false);
+  const [editingReviews, setEditingReviews] = useState(false);
+  const [tempRating, setTempRating] = useState('');
+  const [tempReviews, setTempReviews] = useState('');
 
   if (!state.businessData) {
     return null;
@@ -32,6 +36,152 @@ const BusinessDisplay: React.FC = () => {
         payload: 'Failed to regenerate headline. Please try again.' 
       });
     }
+  };
+
+  const handleEditRating = () => {
+    setEditingRating(true);
+    setTempRating(rating.toString());
+  };
+
+  const handleSaveRating = () => {
+    const newRating = parseFloat(tempRating);
+    if (newRating >= 1 && newRating <= 5) {
+      dispatch({ 
+        type: 'UPDATE_BUSINESS_DATA', 
+        payload: { ...state.businessData!, rating: newRating }
+      });
+      setEditingRating(false);
+    }
+  };
+
+  const handleCancelRating = () => {
+    setEditingRating(false);
+    setTempRating('');
+  };
+
+  const handleEditReviews = () => {
+    setEditingReviews(true);
+    setTempReviews(reviews.toString());
+  };
+
+  const handleSaveReviews = () => {
+    const newReviews = parseInt(tempReviews);
+    if (newReviews >= 0) {
+      dispatch({ 
+        type: 'UPDATE_BUSINESS_DATA', 
+        payload: { ...state.businessData!, reviews: newReviews }
+      });
+      setEditingReviews(false);
+    }
+  };
+
+  const handleCancelReviews = () => {
+    setEditingReviews(false);
+    setTempReviews('');
+  };
+
+  const generateBusinessReport = () => {
+    const performance = getPerformanceLevel(rating);
+    const engagement = getEngagementLevel(reviews);
+    const seoScore = Math.round(85 + (rating - 3.5) * 10);
+    const localVisibility = Math.round(70 + (reviews / 10));
+    const competitiveRank = rating >= 4.5 ? 'Top 10%' : rating >= 4.0 ? 'Top 25%' : 'Top 50%';
+
+    const report = {
+      businessInfo: {
+        name,
+        location,
+        analysisDate: new Date().toLocaleDateString(),
+        reportId: `RPT-${Date.now()}`
+      },
+      metrics: {
+        googleRating: rating,
+        totalReviews: reviews,
+        seoScore,
+        localVisibility: Math.min(localVisibility, 100),
+        competitiveRank,
+        performanceLevel: performance.level,
+        engagementLevel: engagement.level
+      },
+      seoHeadline: headline,
+      recommendations: [
+        rating < 4.0 ? "Focus on improving customer satisfaction to increase rating" : "Maintain excellent customer service standards",
+        reviews < 100 ? "Encourage more customers to leave reviews" : "Continue engaging with customer feedback",
+        seoScore < 90 ? "Optimize website content for better SEO performance" : "Maintain current SEO optimization strategies",
+        "Regularly update business information on Google My Business",
+        "Respond promptly to customer reviews and feedback"
+      ],
+      insights: {
+        strengths: [
+          rating >= 4.0 ? "Strong customer satisfaction" : null,
+          reviews >= 100 ? "Good review volume" : null,
+          seoScore >= 85 ? "Solid SEO foundation" : null
+        ].filter(Boolean),
+        improvements: [
+          rating < 4.0 ? "Customer satisfaction needs attention" : null,
+          reviews < 50 ? "Low review count" : null,
+          seoScore < 80 ? "SEO optimization required" : null
+        ].filter(Boolean)
+      }
+    };
+
+    return report;
+  };
+
+  const exportBusinessReport = () => {
+    const report = generateBusinessReport();
+    const reportContent = `
+# Business Analysis Report
+
+**Business:** ${report.businessInfo.name}
+**Location:** ${report.businessInfo.location}
+**Analysis Date:** ${report.businessInfo.analysisDate}
+**Report ID:** ${report.businessInfo.reportId}
+
+## Executive Summary
+${report.businessInfo.name} in ${report.businessInfo.location} shows ${report.metrics.performanceLevel.toLowerCase()} performance with a ${report.metrics.googleRating}/5.0 rating and ${report.metrics.totalReviews} reviews.
+
+## Key Metrics
+- **Google Rating:** ${report.metrics.googleRating}/5.0
+- **Total Reviews:** ${report.metrics.totalReviews.toLocaleString()}
+- **SEO Score:** ${report.metrics.seoScore}%
+- **Local Visibility:** ${report.metrics.localVisibility}%
+- **Market Position:** ${report.metrics.competitiveRank}
+- **Performance Level:** ${report.metrics.performanceLevel}
+- **Engagement Level:** ${report.metrics.engagementLevel}
+
+## AI-Generated SEO Headline
+"${report.seoHeadline}"
+
+## Strengths
+${report.insights.strengths.map(strength => `- ${strength}`).join('\n')}
+
+## Areas for Improvement
+${report.insights.improvements.map(improvement => `- ${improvement}`).join('\n')}
+
+## Recommendations
+${report.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join('\n')}
+
+## Next Steps
+1. Implement recommended improvements
+2. Monitor metrics monthly
+3. Update SEO content regularly
+4. Engage with customer feedback
+5. Track competitive positioning
+
+---
+*Report generated by GrowthProAI - ${new Date().toLocaleString()}*
+    `.trim();
+
+    const blob = new Blob([reportContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name.replace(/[^a-zA-Z0-9]/g, '_')}_Business_Report_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const renderStars = (rating: number) => {
@@ -127,7 +277,41 @@ const BusinessDisplay: React.FC = () => {
                     <Star className="w-6 h-6 text-white fill-current" />
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-gray-800">{rating}</div>
+                    {editingRating ? (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max="5"
+                          step="0.1"
+                          value={tempRating}
+                          onChange={(e) => setTempRating(e.target.value)}
+                          className="w-20 px-2 py-1 text-2xl font-bold text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                        <button
+                          onClick={handleSaveRating}
+                          className="p-1 text-green-600 hover:bg-green-100 rounded"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleCancelRating}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <div className="text-3xl font-bold text-gray-800">{rating}</div>
+                        <button
+                          onClick={handleEditRating}
+                          className="p-1 text-gray-400 hover:text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     <div className="text-sm text-gray-600 font-medium">Google Rating</div>
                   </div>
                 </div>
@@ -155,7 +339,39 @@ const BusinessDisplay: React.FC = () => {
                     <MessageCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-gray-800">{reviews.toLocaleString()}</div>
+                    {editingReviews ? (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={tempReviews}
+                          onChange={(e) => setTempReviews(e.target.value)}
+                          className="w-24 px-2 py-1 text-2xl font-bold text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          onClick={handleSaveReviews}
+                          className="p-1 text-green-600 hover:bg-green-100 rounded"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleCancelReviews}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <div className="text-3xl font-bold text-gray-800">{reviews.toLocaleString()}</div>
+                        <button
+                          onClick={handleEditReviews}
+                          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     <div className="text-sm text-gray-600 font-medium">Total Reviews</div>
                   </div>
                 </div>
@@ -300,11 +516,16 @@ const BusinessDisplay: React.FC = () => {
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => dispatch({ type: 'RESET_STATE' })}
-              className="flex-1 px-6 py-3 text-sm font-semibold text-gray-600 bg-gray-100/80 backdrop-blur-sm rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 hover:scale-[1.02]"
+              className="flex-1 flex items-center justify-center px-6 py-3 text-sm font-semibold text-gray-600 bg-gray-100/80 backdrop-blur-sm rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 hover:scale-[1.02]"
             >
+              <Building2 className="w-4 h-4 mr-2" />
               Analyze Another Business
             </button>
-            <button className="flex-1 px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+            <button 
+              onClick={exportBusinessReport}
+              className="flex-1 flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+            >
+              <Download className="w-4 h-4 mr-2" />
               Export Business Report
             </button>
           </div>
