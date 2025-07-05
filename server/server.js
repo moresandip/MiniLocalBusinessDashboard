@@ -228,14 +228,10 @@ app.use((error, req, res, next) => {
   });
 });
 
-// app.listen(PORT, '0.0.0.0', () => {
-//   console.log(`🚀 Server running on port ${PORT}`);
-//   console.log(`📊 Dashboard API ready at http://localhost:${PORT}`);
-//   console.log(`📖 API documentation at http://localhost:${PORT}/api`);
-//   console.log(`💚 Health check at http://localhost:${PORT}/health`);
-//   console.log(`🌐 CORS enabled for frontend development`);
-// });
-
-app.listen(3001() =>{
-  console.log("server running on port 3001")
-})
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📊 Dashboard API ready at http://localhost:${PORT}`);
+  console.log(`📖 API documentation at http://localhost:${PORT}/api`);
+  console.log(`💚 Health check at http://localhost:${PORT}/health`);
+  console.log(`🌐 CORS enabled for frontend development`);
+});
