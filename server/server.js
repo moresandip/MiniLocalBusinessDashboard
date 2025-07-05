@@ -235,3 +235,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`💚 Health check at http://localhost:${PORT}/health`);
   console.log(`🌐 CORS enabled for frontend development`);
 });
+
