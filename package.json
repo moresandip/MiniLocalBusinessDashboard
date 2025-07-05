@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "node server/server.js",
-    "dev:server": "node server/server.js"
+    "dev:server": "PORT=3001 node server/server.js"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
