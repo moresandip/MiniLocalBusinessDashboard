@@ -16,10 +16,12 @@ interface BusinessState {
     name: string;
     location: string;
   };
+  headlineLoading: boolean;
 }
 
 type BusinessAction = 
   | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_HEADLINE_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_BUSINESS_DATA'; payload: BusinessData }
   | { type: 'SET_FORM_DATA'; payload: { name: string; location: string } }
@@ -33,15 +35,18 @@ const initialState: BusinessState = {
   formData: {
     name: '',
     location: ''
-  }
+  },
+  headlineLoading: false
 };
 
 const businessReducer = (state: BusinessState, action: BusinessAction): BusinessState => {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
+    case 'SET_HEADLINE_LOADING':
+      return { ...state, headlineLoading: action.payload };
     case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
+      return { ...state, error: action.payload, loading: false, headlineLoading: false };
     case 'SET_BUSINESS_DATA':
       return { 
         ...state, 
@@ -57,7 +62,7 @@ const businessReducer = (state: BusinessState, action: BusinessAction): Business
         businessData: state.businessData 
           ? { ...state.businessData, headline: action.payload }
           : null,
-        loading: false,
+        headlineLoading: false,
         error: null
       };
     case 'RESET_STATE':
