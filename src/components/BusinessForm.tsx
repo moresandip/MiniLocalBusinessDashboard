@@ -46,6 +46,10 @@ const BusinessForm: React.FC = () => {
     try {
       console.log('Sending request to backend:', { name: name.trim(), location: location.trim() });
       
+      // Try multiple approaches to ensure connection
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch('http://localhost:3001/business-data', {
         method: 'POST',
         headers: {
@@ -56,20 +60,33 @@ const BusinessForm: React.FC = () => {
           name: name.trim(), 
           location: location.trim() 
         }),
+        signal: controller.signal,
+        mode: 'cors',
+        credentials: 'omit'
       });
 
+      clearTimeout(timeoutId);
       console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Error response:', errorData);
-        throw new Error(`Server responded with ${response.status}: ${errorData}`);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Server error (${response.status}): ${errorText}`);
       }
 
       const data = await response.json();
       console.log('Received business data:', data);
       
-      // Save business data internally
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from server');
+      }
+
+      if (!data.name || !data.location || typeof data.rating !== 'number' || typeof data.reviews !== 'number' || !data.headline) {
+        throw new Error('Incomplete business data received from server');
+      }
+      
+      // Save business data
       dispatch({ type: 'SET_BUSINESS_DATA', payload: data });
       setIsSubmitted(true);
       
@@ -77,22 +94,28 @@ const BusinessForm: React.FC = () => {
       setTimeout(() => setIsSubmitted(false), 3000);
       
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error('Fetch error details:', error);
       
       let errorMessage = 'Failed to fetch business data. ';
       
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        errorMessage += 'Please make sure the server is running on http://localhost:3001';
-      } else if (error instanceof Error) {
-        errorMessage += error.message;
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage += 'Request timed out. Please check if the server is running.';
+        } else if (error.message.includes('fetch')) {
+          errorMessage += 'Cannot connect to server. Please ensure the backend server is running on http://localhost:3001';
+        } else {
+          errorMessage += error.message;
+        }
       } else {
-        errorMessage += 'Please try again.';
+        errorMessage += 'Unknown error occurred. Please try again.';
       }
       
       dispatch({ 
         type: 'SET_ERROR', 
         payload: errorMessage
       });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
@@ -117,6 +140,31 @@ const BusinessForm: React.FC = () => {
     dispatch({ type: 'RESET_STATE' });
     setFormErrors({});
     setIsSubmitted(false);
+  };
+
+  // Test server connection
+  const testServerConnection = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/', {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Server connection test successful:', data);
+        dispatch({ type: 'SET_ERROR', payload: null });
+      } else {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Server connection test failed:', error);
+      dispatch({ 
+        type: 'SET_ERROR', 
+        payload: 'Cannot connect to server. Please start the backend server by running: npm run dev:server' 
+      });
+    }
   };
 
   return (
@@ -145,7 +193,7 @@ const BusinessForm: React.FC = () => {
                 <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 <div>
                   <p className="text-sm text-green-600 font-medium">
-                    Business data saved successfully!
+                    Business data loaded successfully!
                   </p>
                   <p className="text-xs text-green-500 mt-1">
                     Your insights are now available below
@@ -247,15 +295,32 @@ const BusinessForm: React.FC = () => {
             <div className="mt-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl animate-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-start">
                 <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-red-600 font-medium">{state.error}</p>
-                  <p className="text-xs text-red-500 mt-1">
-                    Make sure the backend server is running on port 3001
-                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={testServerConnection}
+                      className="text-xs text-red-600 hover:text-red-700 underline"
+                    >
+                      Test Server Connection
+                    </button>
+                    <span className="text-xs text-red-400">•</span>
+                    <span className="text-xs text-red-500">
+                      Run: npm run dev:server
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
+          {/* Server Status Indicator */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center text-xs text-gray-500">
+              <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+              Backend Server: localhost:3001
+            </div>
+          </div>
         </div>
       </div>
     </div>
