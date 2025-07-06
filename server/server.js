@@ -2,15 +2,26 @@ import express from 'express';
 import cors from 'cors';
 
 const app = express();
+// Use dynamic port for deployment (Render will provide PORT environment variable)
 const PORT = process.env.PORT || 3001;
 
-// Enhanced CORS configuration
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+// Enhanced CORS configuration for production deployment
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://127.0.0.1:5173',
+  'https://rococo-gelato-acba03.netlify.app', // Your deployed frontend
+  // Add your custom domain here when you get one
+];
+
+// If in production, allow all origins (you can restrict this later)
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' ? true : allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
@@ -26,6 +37,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check route (important for Render)
+app.get('/health', (req, res) => {
+  console.log('Health check accessed');
+  res.json({
+    status: 'OK',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    memory: process.memoryUsage(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Root route
 app.get('/', (req, res) => {
   console.log('Root route accessed');
@@ -33,6 +57,7 @@ app.get('/', (req, res) => {
     message: 'Local Business Dashboard API is running successfully',
     status: 'healthy',
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
     availableRoutes: [
       'GET /',
       'POST /business-data',
@@ -155,18 +180,6 @@ app.get('/regenerate-headline', (req, res) => {
   res.json(responseData);
 });
 
-// GET /health route
-app.get('/health', (req, res) => {
-  console.log('Health check accessed');
-  res.json({
-    status: 'OK',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    memory: process.memoryUsage(),
-    version: '1.0.0'
-  });
-});
-
 // GET /api route
 app.get('/api', (req, res) => {
   console.log('API documentation accessed');
@@ -174,11 +187,17 @@ app.get('/api', (req, res) => {
     documentation: {
       title: 'Local Business Dashboard API',
       version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
       endpoints: [
         {
           method: 'GET',
           path: '/',
           description: 'API information and status'
+        },
+        {
+          method: 'GET',
+          path: '/health',
+          description: 'Health check endpoint for monitoring'
         },
         {
           method: 'POST',
@@ -211,11 +230,6 @@ app.get('/api', (req, res) => {
             timestamp: 'string - Response timestamp',
             success: 'boolean - Request success status'
           }
-        },
-        {
-          method: 'GET',
-          path: '/health',
-          description: 'Health check endpoint'
         }
       ]
     }
@@ -252,32 +266,18 @@ app.use((error, req, res, next) => {
 });
 
 // Start the server with enhanced logging
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log(`🚀 Local Business Dashboard API Server`);
   console.log(`📅 Started: ${new Date().toISOString()}`);
-  console.log(`🌐 Server running on: http://localhost:${PORT}`);
-  console.log(`📊 Dashboard API ready at: http://localhost:${PORT}`);
-  console.log(`📖 API documentation: http://localhost:${PORT}/api`);
-  console.log(`💚 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔧 CORS enabled for frontend development`);
+  console.log(`🌐 Server running on: http://0.0.0.0:${PORT}`);
+  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Dashboard API ready`);
+  console.log(`📖 API documentation: http://0.0.0.0:${PORT}/api`);
+  console.log(`💚 Health check: http://0.0.0.0:${PORT}/health`);
+  console.log(`🔧 CORS enabled for production deployment`);
   console.log(`📝 Request logging enabled`);
   console.log('='.repeat(50));
-  
-  // Test server endpoints
-  console.log('\n🧪 Testing server endpoints...');
-  
-  // Test root endpoint
-  fetch(`http://localhost:${PORT}/`)
-    .then(res => res.json())
-    .then(data => console.log('✅ Root endpoint working:', data.message))
-    .catch(err => console.log('❌ Root endpoint error:', err.message));
-    
-  // Test health endpoint
-  fetch(`http://localhost:${PORT}/health`)
-    .then(res => res.json())
-    .then(data => console.log('✅ Health endpoint working:', data.status))
-    .catch(err => console.log('❌ Health endpoint error:', err.message));
 });
 
 // Graceful shutdown
