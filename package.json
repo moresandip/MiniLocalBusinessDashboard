@@ -4,14 +4,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run dev:server\" \"vite\"",
+    "dev:frontend": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "node server/server.js",
     "dev:server": "PORT=3001 node server/server.js",
     "start": "node server/server.js",
-    "dev:full": "concurrently \"npm run dev:server\" \"npm run dev\"",
+    "dev:full": "concurrently \"npm run dev:server\" \"npm run dev:frontend\"",
     "auto-start": "node server/auto-start.js"
   },
   "dependencies": {
