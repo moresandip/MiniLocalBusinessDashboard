@@ -83,12 +83,18 @@ class ServerManager {
     options: RequestInit = {}
   ): Promise<T> {
     // Ensure server is running before making request
-    await this.ensureServerRunning();
+    const serverRunning = await this.ensureServerRunning();
+    
+    if (!serverRunning) {
+      // If server can't be started, throw error to trigger fallback
+      throw new Error('Server not available');
+    }
 
     const response = await fetch(`http://localhost:3001${endpoint}`, {
       ...options,
       mode: 'cors',
       credentials: 'omit',
+      signal: AbortSignal.timeout(10000), // 10 second timeout
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
