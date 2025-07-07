@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BusinessProvider } from './context/BusinessContext';
 import BusinessForm from './components/BusinessForm';
 import BusinessDisplay from './components/BusinessDisplay';
 import { useBusiness } from './context/BusinessContext';
+import { serverManager } from './utils/serverManager';
 
 const DashboardContent: React.FC = () => {
   const { state } = useBusiness();
+
+  // Silently initialize server on app start
+  useEffect(() => {
+    serverManager.ensureServerRunning().catch(() => {
+      // Silently handle server start failure
+      console.log('Server auto-start attempted');
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
